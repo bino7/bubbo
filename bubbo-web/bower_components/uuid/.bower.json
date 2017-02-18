@@ -1,0 +1,14 @@
+{
+  "name": "uuid",
+  "homepage": "https://github.com/defunctzombie/node-uuid",
+  "version": "2.0.2",
+  "_release": "2.0.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "v2.0.2",
+    "commit": "54e952981beeab7954a2f6d952cc21fc88f3a11a"
+  },
+  "_source": "https://github.com/defunctzombie/node-uuid.git",
+  "_target": "^2.0.2",
+  "_originalSource": "uuid"
+}

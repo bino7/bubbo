@@ -1,0 +1,78 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-input">
+
+  <template>
+
+    <style include="shared-styles">
+      .input-container {
+        @apply(--layout-horizontal);
+        overflow-y: auto;
+      }
+
+      .input {
+        @apply(--layout-flex);
+        --paper-input-container: {
+        };
+        --paper-input-container-focus-color: rgba(66, 133, 244, 0);
+        --paper-input-container-underline: {
+          display: none
+        };
+        --paper-input-container-label-floating: {
+          display: none;
+        };
+        font-size: 1.2em;
+        border: none;
+        display: block;
+
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        font-size: 14px;
+        padding: 8px 10px;
+
+        word-wrap: break-word;
+        word-break: break-all;
+
+        outline: 0px solid transparent;
+      }
+
+      .button-container {
+        @apply(--layout-horizontal);
+        @apply(--layout-end);
+        @apply(--layout-end);
+      }
+
+      .button-container paper-icon-button {
+        @apply(--layout-center-center);
+        margin-right: 8px;
+      }
+    </style>
+    <div class="container input-container" bb="100px">
+      <!--<iron-autogrow-textarea class="input" no-label-float value="{{input}}" on-tap="expand">-->
+      <div id="input" class="input" contenteditable on-tap="expand" on-paste="onPaste">
+
+      </div>
+      <!--</iron-autogrow-textarea>-->
+      <div class="button-container">
+        <paper-icon-button class="icon" icon="send" on-tap="send"></paper-icon-button>
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-input',
+
+      properties: {},
+
+      observers: []
+    });
+
+  </script>
+
+</dom-module>

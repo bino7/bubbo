@@ -1,0 +1,45 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<dom-module id="my-card">
+
+  <template>
+
+    <style is="custom-style" include="shared-styles">
+
+    </style>
+    <div class="card">
+      <div class="top">
+        <span></span>
+      </div>
+      <div class="cover">
+
+      </div>
+      <div class="avatar">
+
+      </div>
+      <div class="title">
+
+      </div>
+      <div class="media">
+        <template is="dom-repeat" items="{{meida}}">
+          <iron-image></iron-image>
+        </template>
+
+      </div>
+    </div>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-card',
+
+      properties: {},
+
+      observers: []
+    });
+
+  </script>
+
+</dom-module>
