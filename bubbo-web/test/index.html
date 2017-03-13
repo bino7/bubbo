@@ -15,15 +15,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
     <title>Tests</title>
-
-    <script src="../bower_components/web-component-tester/browser.js"></script>
+    <script src="bundle.js"></script>
   </head>
   <body>
     <script>
-      WCT.loadSuites([
-        'my-view1.html?dom=shady',
-        'my-view1.html?dom=shadow'
-      ]);
+      var uuid = require('uuid');
+      console.log('uuid',uuid.v4());
+
+      /*var peer = require('simplepeer');
+      console.log('peer',peer);*/
+
+      /*var Vibrant = require('Vibrant');
+      console.log('Vibrant',Vibrant);*/
     </script>
   </body>
 </html>

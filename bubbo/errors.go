@@ -1,16 +1,26 @@
 package bubbo
 
-import "errors"
+import (
+	"net/http"
+)
+
+type BubboError struct {
+	code int
+	msg  string
+}
+
+func (e *BubboError)Error() string {
+	return e.msg
+}
 
 var (
-	ErrorForbidden=errors.New("forbidden")
-	ErrorUserExisted=errors.New("user existed")
-	ErrorUserNotFound =errors.New("user not found")
-	ErrorEmptyField=errors.New("empty field")
-	ErrorCheckUserInfo=errors.New("check userInfo error")
-	ErrUpdateUserInfoFailed=errors.New("update userInfo failed")
-	ErrBadMsg=errors.New("bad msg")
-	ErrRemoteNotFound=errors.New("remote not found")
-	ErrorMediaNotFound=errors.New("user not found")
+	ErrorForbidden = &BubboError{http.StatusForbidden, "forbidden"}
+	ErrorUserExisted = &BubboError{http.StatusConflict, "user existed"}
+	ErrorUserNotFound = &BubboError{http.StatusNotFound, "user not found"}
+	ErrorEmptyField = &BubboError{http.StatusNoContent, "empty field"}
+	ErrBadMsg = &BubboError{http.StatusNoContent, "bad msg"}
+	ErrRemoteNotFound = &BubboError{http.StatusNotFound, "remote not found"}
+	ErrorMediaNotFound = &BubboError{http.StatusNotFound, "user not found"}
+	ErrorNotModified = &BubboError{http.StatusNotModified, "not updated"}
 )
 

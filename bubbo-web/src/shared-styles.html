@@ -20,11 +20,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --paper-icon-button-ink-color: #4285f4;
         --app-background-color: #f5f8fa;
       }
-      .page-container {
-        @apply(--layout);
-        @apply(--layout-center-center);
-        @apply(--layout-fit);
-        background-color: #f5f8fa;
+      .page {
+        @apply(--layout-fullbleed);
+        background-color:var(--app-background-color);
       }
 
       .container {
@@ -44,6 +42,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       paper-button:hover {
         color: var(--app-primary-color);
+      }
+
+      .space{
+        @apply(--layout-flex);
       }
 
       .card {
@@ -80,10 +82,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         font-size: 22px;
       }
 
+      a {
+        display: block;
+
+        padding: 0 16px;
+
+        text-decoration: none;
+
+        color: var(--app-secondary-color);
+
+        line-height: 40px;
+      }
+
       .icon {
          /*@apply(--layout-center-center);*/
          color: #66757f;
-
+         cursor: hand;
        }
 
       .icon:focus {
@@ -94,8 +108,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--app-primary-color);
       }
 
+      /*.icon:selected {
+        color: var(--app-primary-color);
+      }*/
+
       .avatar{
         border-radius: 3px;
+      }
+
+      .button-container {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--layout-end);
+      }
+
+      .button-container paper-icon-button {
+        @apply(--layout-center-center);
+        color: #66757f;
+        margin-right: 8px;
+      }
+
+      .list{
+        border-top: 1px solid #e1e8ed;
+        border-left: 1px solid #e1e8ed;
+        border-right: 1px solid #e1e8ed;
+        border-radius: 4px;
+      }
+
+      .list .item{
+        background-color: #fff;
+        border-bottom: 1px solid #e1e8ed;
+      }
+
+      .list .item:hover{
+        background-color: var(--app-background-color);
+      }
+
+      paper-input{
+        --paper-input-container-underline:{
+          color:#66757f;
+          background-color: #66757f;
+        }
       }
     </style>
   </template>

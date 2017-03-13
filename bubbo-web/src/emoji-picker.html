@@ -1,5 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
 <script src="emoji-lib.js"></script>
@@ -11,9 +12,17 @@
       :host {
         /*mini-height:128px;*/
       }
-
+      .emojiContainer{
+        /*-webkit-scrollbar-button 滚动条两端的按钮
+        -webkit-scrollbar-track 外层轨道
+        -webkit-scrollbar-track-piece 内层轨道，滚动条中间部分（除去）
+        -webkit-scrollbar-thumb 拖动条，滑块
+        -webkit-scrollbar-corner 边角
+       -webkit-resizer 定义右下角拖动块的样式*/
+      }
       .emojis {
         height: 148px;
+        overflow-x: hidden;
       }
 
       .emojis iron-list {
@@ -24,6 +33,7 @@
         width: 48px;
         height: 48px;
         padding: 8px;
+        cursor: hand;
       }
     </style>
     <paper-tabs selected={{page}} attr-for-selected="name">
@@ -46,36 +56,35 @@
     <iron-pages
             selected="[[page]]"
             attr-for-selected="name"
-            role="main">
+            role="main" class="emojiContainer">
       <iron-list name="people" class="emojis" grid items="[[peopleEmojis]]" as="item"
                  selection-enabled="true" selected-item="{{selectedEmoji}}">
         <template>
-          <iron-icon class="emoji" src="[[item.base64]]">
-          </iron-icon>
+          <paper-icon-button class="emoji" src="[[item.base64]]"></paper-icon-button>
         </template>
       </iron-list>
       <iron-list name="nature" class="emojis" grid items="[[natureEmojis]]" as="item"
                  selection-enabled="true" selected-item="{{selectedEmoji}}">
         <template>
-          <iron-icon class="emoji" src="[[item.base64]]"></iron-icon>
+          <paper-icon-button class="emoji" src="[[item.base64]]"></paper-icon-button>
         </template>
       </iron-list>
       <iron-list name="object" class="emojis" grid items="[[objectEmojis]]" as="item"
                  selection-enabled="true" selected-item="{{selectedEmoji}}">
         <template>
-          <iron-icon class="emoji" src="[[item.base64]]"></iron-icon>
+          <paper-icon-button class="emoji" src="[[item.base64]]"></paper-icon-button>
         </template>
       </iron-list>
       <iron-list name="place" class="emojis" grid items="[[placeEmojis]]" as="item"
                  selection-enabled="true" selected-item="{{selectedEmoji}}">
         <template>
-          <iron-icon class="emoji" src="[[item.base64]]"></iron-icon>
+          <paper-icon-button class="emoji" src="[[item.base64]]"></paper-icon-button>
         </template>
       </iron-list>
       <iron-list name="symbol" class="emojis" grid items="[[symbolEmojis]]" as="item"
                  selection-enabled="true" selected-item="{{selectedEmoji}}">
         <template>
-          <iron-icon class="emoji" src="[[item.base64]]"></iron-icon>
+          <paper-icon-button class="emoji" src="[[item.base64]]"></paper-icon-button>
         </template>
       </iron-list>
     </iron-pages>

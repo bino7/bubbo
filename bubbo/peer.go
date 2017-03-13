@@ -11,6 +11,20 @@ import (
 	"net"
 )
 
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 512
+)
+
 func isCloseable(err error) bool {
 	if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
 		return true
@@ -32,9 +46,9 @@ type peer struct {
 	done       chan bool
 	handlers   map[string]EventHandler
 	mutex      sync.Mutex
-	timeout    time.Duration
 	in         chan *Event
 	out        chan *Event
+	errCount	 int
 }
 
 func newPeer() *peer {
@@ -45,43 +59,54 @@ func newPeer() *peer {
 		lastAccess:time.Now(),
 		done:make(chan bool),
 		handlers:make(map[string]EventHandler),
-		timeout:5 * time.Minute,
 		in:make(chan *Event),
 		out:make(chan *Event),
+		errCount:0,
 	}
 }
 
 func (p *peer)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ok, token := authenticate(w, r)
 	if !ok {
+		upgrader.ReturnError(w, r, http.StatusForbidden, "Forbidden")
 		return
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	p.uuid = claims["UUID"].(string)
-	p.username = claims["Username"].(string)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
+	claims := token.Claims.(jwt.MapClaims)
+	p.uuid = claims["UUID"].(string)
+	p.username = claims["Username"].(string)
+
+	conn.SetCloseHandler(func(code int, text string) error{
+		p.close()
+		return nil
+	})
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+
 	p.conn = conn
+	log.Println(p.uuid,"connected")
 
 	p.On("profile", p.profile)
-	p.On("userPeers", p.userPeers)
-	p.On("updateUserProfile", p.updateUserProfile)
-	p.On("icecandidate", p.connectRemote)
-	p.On("offer", p.connectRemote)
-	p.On("answer", p.connectRemote)
-	/*p.On("media",p.media)
-	p.On("addMedia",p.addMedia)
-	p.On("removeMedia",p.removeMedia)*/
+	p.On("peers", p.peers)
+	p.On("updateProfile", p.updateProfile)
+	p.On("connect", p.connectRemote)
+	p.On("following",p.following)
+	p.On("followers",p.followers)
 
 	peers.add(p)
 
 	go p.readMessage()
 
+	ticker := time.NewTicker(pingPeriod)
 	for {
 		select {
 		case event := <-p.Out():
@@ -91,14 +116,16 @@ func (p *peer)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		case event := <-p.in:
 			group := event.Group
-			if event.Type == "err" {
+			_type := event.Type
+			if _type == "err" {
 				p.writeMessage(event)
 			}
+
 			handler := p.handlers[event.Type]
 			for handler != nil {
 				event, err := handler(event)
 				if err != nil {
-					p.writeMessage(errorEvent(ErrBadMsg))
+					p.writeMessage(errorEvent(group,_type, err))
 					break
 				}
 				if event != nil {
@@ -110,6 +137,11 @@ func (p *peer)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if event != nil {
 				p.out <- event
 			}
+		case <-ticker.C:
+			p.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := p.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				return
+			}
 		}
 	}
 }
@@ -119,35 +151,43 @@ func (p *peer)readMessage() {
 		if p.isDone() {
 			return
 		}
-		deadline := time.Now().Add(p.timeout)
-		p.conn.SetReadDeadline(deadline)
+		p.conn.SetReadDeadline(time.Now().Add(pongWait))
+		p.conn.SetPongHandler(func(string) error {
+			p.conn.SetReadDeadline(time.Now().Add(pongWait))
+			return nil
+		})
+
 		event := new(Event)
 		err := p.conn.ReadJSON(event)
-		if err == io.ErrUnexpectedEOF {
-			p.in <- errorEvent(ErrBadMsg)
-		} else if isCloseable(err) {
-			log.Println("connection closed prematurely: %v", err)
-			p.close()
-			break
-		} else {
-			log.Println("failed to read message: %v", err)
-		}
-
-		if err == nil {
+		if err!=nil{
+			if err == io.ErrUnexpectedEOF {
+				p.in <- errorEvent("*","badMsg", ErrBadMsg)
+			} else if isCloseable(err) {
+				log.Println("connection closed prematurely:", err)
+				p.close()
+				break
+			} else {
+				log.Println("failed to read message:", err)
+			}
+		}else{
 			p.in <- event
 		}
 	}
 }
 
 func (p *peer)writeMessage(event *Event) {
-	deadline := time.Now().Add(p.timeout)
-	p.conn.SetWriteDeadline(deadline)
+	if p.isDone() {
+		return
+	}
+	p.conn.SetWriteDeadline(time.Now().Add(writeWait))
 	err := p.conn.WriteJSON(event)
-	if isCloseable(err) {
-		log.Println("connection closed prematurely: %v", err)
-		p.close()
-	} else {
-		log.Println("failed to write message: %v", err)
+	if err!=nil{
+		if isCloseable(err) {
+			log.Println("connection closed prematurely:", err)
+			p.close()
+		} else {
+			log.Println("failed to write message:", err)
+		}
 	}
 	return
 }
@@ -166,7 +206,7 @@ func (p *peer)Out() (<- chan *Event) {
 	return p.out
 }
 
-func (p *peer)isDone() {
+func (p *peer)isDone() bool {
 	select {
 	case <-p.done:
 		return true
@@ -179,7 +219,7 @@ func (p *peer)profile(eve *Event) (event *Event, err error) {
 	u, err := user(p.username)
 
 	if u != nil {
-		version := eve.Detail["version"]
+		version := int64(eve.Detail["version"].(float64))
 		profile := u.profile()
 		if profile.Version > version {
 			event = &Event{
@@ -208,19 +248,24 @@ func (p *peer)profile(eve *Event) (event *Event, err error) {
 	return
 }
 
-func (p *peer)updateUserProfile(eve *Event) (event *Event, err error) {
-	username := eve.Detail["username"]
+func (p *peer)updateProfile(eve *Event) (event *Event, err error) {
+	username := eve.Detail["username"].(string)
 	if username != p.username {
 		err = ErrorForbidden
 		return
 	}
 	user, _ := user(username)
-	user.Username = eve.Detail["username"]
-	user.Title = eve.Detail["title"]
-	user.Desc = eve.Detail["desc"]
-	user.Email = eve.Detail["email"]
-	user.Avatar = eve.Detail["avatar"]
-	err=updateUser(user)
+	user.Username = eve.Detail["username"].(string)
+	user.Title = eve.Detail["title"].(string)
+	user.Desc = eve.Detail["desc"].(string)
+	user.Email = eve.Detail["email"].(string)
+	user.Avatar = eve.Detail["avatar"].(string)
+	ver, err := updateUser(user)
+	if err != nil {
+		return
+	}
+	event = &Event{Type:"userPeers", Detail:Detail{"result":"success", "version":ver}}
+
 	return
 }
 
@@ -233,7 +278,7 @@ func (p *peer)connectRemote(eve *Event) (event *Event, err error) {
 
 	remote := peers.getWithId(uuid)
 	if remote == nil {
-		p.writeMessage(ErrRemoteNotFound)
+		p.writeMessage(errorEvent("*",eve.Type, ErrRemoteNotFound))
 		return
 	}
 
@@ -241,78 +286,53 @@ func (p *peer)connectRemote(eve *Event) (event *Event, err error) {
 	return
 }
 
-func (p *peer)updateUserInfo(eve *Event) (event *Event, err error) {
-	username := eve.Detail["username"]
-	if username != p.username {
-		err = ErrorForbidden
-		return
-	}
-
-	u, err := user(username)
-	if err != nil {
-		return err
-	}
-
-	u.Username = username
-	u.Email = eve.Detail["email"]
-	u.Avatar = eve.Detail["avatar"]
-
-	err = updateUser(u)
-	if err != nil {
-		log.Println(err)
-		err = ErrUpdateUserInfoFailed
-		return
-	}
-
-	event = &Event{
-		Type:"updated",
-		Detail:{"version":u.Version},
-	}
-
-	return
-}
-
-func (p *peer)userInfo(eve *Event) (event *Event, err error) {
-	username := eve.Detail["username"]
-	version := eve.Detail["version"]
-	u, err := user(username)
-	if err != nil {
-		return err
-	}
-	if u.Version > version {
-
-		event = &Event{
-			Type:"userInfo",
-			Detail:{"username":u.Username,
-				"email":u.Email,
-				"avatar":u.Avatar,
-				"version":u.Version,
-			},
-		}
-	} else {
-		event = &Event{Type:"unmodified"}
-	}
-	return
-}
-func (p *peer)userPeers(eve *Event) (event *Event, err error) {
-	username := eve.Detail["username"]
+func (p *peer)peers(eve *Event) (event *Event, err error) {
+	username := eve.Detail["username"].(string)
 	userPeers := peers.getWithUsername(username)
 	if userPeers == nil || len(userPeers) == 0 {
-		event = &Event{Type:"offline", Detail:{}}
+		event = &Event{Type:"offline", Detail:Detail{}}
 	} else {
-		ps := make([]*peer, len(userPeers))
+		ps := make([]string, len(userPeers))
 		for i, p := range userPeers {
 			ps[i] = p.uuid
 		}
-		event = &Event{Type:"userPeers", Detail:{"peers":ps}}
+		event = &Event{Type:"peers", Detail:Detail{"peers":ps}}
 	}
 
 	return
 }
 
-func (p *peer)timeout(eve *Event) (event *Event, err error) {
-	p.writeMessage(eve)
-	p.close()
+func (p *peer)following(eve *Event) (event *Event, err error) {
+	version := int64(eve.Detail["version"].(float64))
+	u, err := user(p.username);
+	if err != nil {
+		return
+	}
+
+	f, err := u.following(version)
+	if err != nil {
+		return
+	}
+
+	event = &Event{Type:"following", Detail:Detail{"following":f}}
+
+	return
+}
+
+func (p *peer)followers(eve *Event) (event *Event, err error) {
+	version := int64(eve.Detail["version"].(float64))
+	u, err := user(p.username);
+	if err != nil {
+		return
+	}
+
+	f, err := u.followers(version)
+	if err != nil {
+		return
+	}
+
+	event = &Event{Type:"followers", Detail:Detail{"followers":f}}
+
 	return
 }
 
@@ -320,4 +340,5 @@ func (p *peer) close() {
 	peers.remove(p)
 	p.done <- true
 	p.conn.Close()
+	log.Println(p.uuid,"closed")
 }

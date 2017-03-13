@@ -1,16 +1,12 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../bower_components/paper-card/paper-card.html">
-<link rel="import" href="shared-styles.html">
-
 
 <dom-module id="my-login">
   <template>
     <style include="shared-styles">
-
+      .page{
+        @apply(--layout);
+        @apply(--layout-center-center);
+      }
       .inputs {
         @apply(--layout-vertical);
         @apply(--layout-vertical);
@@ -41,9 +37,9 @@
             method="post"
             contentType="application/json"
             headers='{"Content-Type":"application/json","content-type":"application/json"}'
-            body='{"Username":"[[loginData.username]]", "Password":"[[loginData.password]]","UUID":"[[UUID]]"}'
+            body='{"Username":"[[loginData.username]]", "Password":"[[loginData.password]]","UUID":"[[uuid]]"}'
             handle-as="json"
-            on-response="onSuccess"
+            on-response="onLoginSuccess"
             on-error="onError"
             with-credentials></iron-ajax>
 
@@ -54,15 +50,16 @@
             contentType="application/json"
             headers='{"content-type":"application/json"}'
             body='{"Email":"[[registerData.email]]","Username":"[[registerData.username]]",
-                   "Password":"[[registerData.password]]","UUID":"[[UUID]]"}'
+                   "Password":"[[registerData.password]]","UUID":"[[uuid]]"}'
             handle-as="json"
-            on-response="onSuccess"
+            on-response="onRegisterSuccess"
             on-error="onError"
             withCredentials="true"></iron-ajax>
 
-    <div class="page-container">
+    <div class="page">
       <template is="dom-if" if="[[isLogin]]">
         <div name="login">
+          [[error]]
           <template is="dom-if" if="{{error}}">
             <div class="error">
               [[error]]
@@ -70,8 +67,7 @@
           </template>
           <div class="inputs">
             <paper-input label="Username" value="{{loginData.username}}"></paper-input>
-            <paper-input label="Password" type="password"
-                         value="{{loginData.password}}"></paper-input>
+            <paper-input label="Password" type="password" value="{{loginData.password}}"></paper-input>
           </div>
           <div class="buttons">
             <paper-button on-tap="login">Login</paper-button>
@@ -107,8 +103,14 @@
       is: 'my-login',
 
       properties: {
-        page: String,
-        UUID: String,
+        uuid: {
+          type:String,
+          reflectToAttribute: true
+        },
+        username:{
+          type:String,
+          reflectToAttribute: true
+        },
         isLogin: {
           type: Boolean,
           value: true
@@ -145,9 +147,14 @@
         this.$.registerAjax.generateRequest();
       },
 
-      onSuccess: function () {
+      onLoginSuccess: function () {
+        this.username=this.loginData.username;
+        console.log(this.username);
         this.fire('signed-in', null);
-        this.page = 'dashboard';
+      },
+      onRegisterSuccess:function(){
+        this.username=this.registerData.username;
+        this.fire('signed-in', null);
       },
 
       onError: function (r) {
@@ -166,6 +173,7 @@
             this.error = 'server wrong';
             break;
         }
+        console.log(this.error);
       }
     });
   </script>

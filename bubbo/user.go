@@ -65,20 +65,31 @@ func registerUser(user *User) (err error) {
 	return
 }
 
-func updateUser(user *User) (err error) {
+func updateUser(user *User) (version int64,err error) {
 	user.Version = time.Now().Unix()
 	err = db.Update(user)
+	if err!=nil {
+		version=user.Version
+	}
 	return
 }
 
-type following struct {
+type Following struct {
 	username string `storm:"id"`
 }
 
-func (u *User) following() (following []string, err error) {
-	flowgs := make([]*following, 0)
-	node := db.From(u.Username, "following")
-	err = node.All(flowgs)
+func (u *User) following(version int64) (following []string, err error) {
+	n := db.From(u.Username)
+	ver:=int64(0)
+	n.Get("following","version",&ver)
+	if ver<=version{
+		err=ErrorNotModified
+		return
+	}
+
+	flowgs := make([]*Following, 0)
+	n = db.From(u.Username, "following")
+	err = n.All(flowgs)
 	if err == nil {
 		following = make([]string, len(flowgs))
 		l := 0
@@ -95,55 +106,51 @@ func (u *User) following() (following []string, err error) {
 }
 
 func (u *User) follow(username string) (err error) {
-	user, err = user(username)
+	user, err := user(username)
 	if user == nil && err != nil {
 		return
 	}
-
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
+	n:=db.From(u.Username)
+	n.Set("following", "version", time.Now().Unix())
+	n = db.From(u.Username, "following")
+	err = n.Save(&Following{username})
 	if err != nil {
 		return
 	}
-	n := db.From(u.Username, "following")
-	n = n.WithTransaction(tx)
-	err = n.Save(&following{username})
-	if err != nil {
-		return
-	}
-	return tx.Commit()
+	return n.Commit()
 }
 
 func (u *User) unfollow(username string) (err error) {
-	user, err = user(username)
+	user, err := user(username)
 	if user == nil && err != nil {
 		return
 	}
-
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
+	n:=db.From(u.Username)
+	n.Set("following", "version", time.Now().Unix())
+	n = db.From(u.Username, "following")
+	err = n.Drop(&Following{username})
 	if err != nil {
 		return
 	}
-	n := db.From(u.Username, "following")
-	n = n.WithTransaction(tx)
-	err = n.Drop(&following{username})
-	if err != nil {
-		return
-	}
-	return tx.Commit()
+	return n.Commit()
 }
 
 type follower struct {
 	username string `storm:"id"`
 }
 
-func (u *User) followers() (followers []string, err error) {
+func (u *User) followers(version int64) (followers []string, err error) {
+	n := db.From(u.Username)
+	ver:=int64(0)
+	n.Get("followers","version",&ver)
+	if ver<=version{
+		err=ErrorNotModified
+		return
+	}
+
 	flowgs := make([]*follower, 0)
-	node := db.From(u.Username, "follower")
-	err = node.All(flowgs)
+	n = db.From(u.Username, "followers")
+	err = n.All(flowgs)
 	if err == nil {
 		followers = make([]string, len(flowgs))
 		l := 0
@@ -160,98 +167,38 @@ func (u *User) followers() (followers []string, err error) {
 }
 
 func (u *User) addFollower(username string) (err error) {
-	user, err = user(username)
+	user, err := user(username)
 	if user == nil && err != nil {
 		return
 	}
-
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
-	if err != nil {
-		return
-	}
-	n := db.From(u.Username, "follower")
-	n = n.WithTransaction(tx)
+	n := db.From(u.Username)
+	n.Set("followers", "version", time.Now().Unix())
+	n = db.From(u.Username, "followers")
 	err = n.Save(&follower{username})
 	if err != nil {
 		return
 	}
-	return tx.Commit()
+	return n.Commit()
 }
 
 func (u *User) removeFollower(username string) (err error) {
-	user, err = user(username)
+	user, err := user(username)
 	if user == nil && err != nil {
 		return
 	}
 
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
-	if err != nil {
-		return
-	}
-	n := db.From(u.Username, "follower")
-	n = n.WithTransaction(tx)
+	n := db.From(u.Username)
+	n.Set("followers", "version", time.Now().Unix())
+	n = db.From(u.Username, "followers")
 	err = n.Drop(&follower{username})
 	if err != nil {
 		return
 	}
-	return tx.Commit()
+	return n.Commit()
 }
-
-/*type Media struct {
-	name string `storm:"id"`
-	data string
-}
-
-func (u *User) medias() (medias []Media, err error) {
-	medias = make([]*Media, 0)
-	node := db.From(u.Username, "media")
-	err = node.All(medias)
-	return
-}
-
-func (u *User) addMedia(media Media) (err error) {
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
-	if err != nil {
-		return
-	}
-	n := db.From(u.Username, "follower")
-	n = n.WithTransaction(tx)
-	err = n.Save(&follower{username})
-	if err != nil {
-		return
-	}
-	return tx.Commit()
-}
-
-func (u *User) removeMedia(username string) (err error) {
-	user, err = user(username)
-	if user == nil && err != nil {
-		return
-	}
-
-	tx, err := db.Begin(true)
-	u.Version = time.Now().Unix()
-	err = db.UpdateField(u, "Version", u.Version)
-	if err != nil {
-		return
-	}
-	n := db.From(u.Username, "follower")
-	n = n.WithTransaction(tx)
-	err = n.Drop(&follower{username})
-	if err != nil {
-		return
-	}
-	return tx.Commit()
-}*/
 
 func (u *User) token(uuid string) *jwt.Token {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"UUID": uuid,
 		"Username": u.Username,
 		"Password":u.Password,
@@ -267,6 +214,7 @@ type UserProfile struct {
 	Email    string
 	Avatar   string
 	Version  int64
+	Status   string
 }
 
 func (u *User) profile() (*UserProfile) {
@@ -277,6 +225,7 @@ func (u *User) profile() (*UserProfile) {
 		Email:u.Email,
 		Avatar:u.Avatar,
 		Version:u.Version,
+		Status:"online",
 	}
 }
 

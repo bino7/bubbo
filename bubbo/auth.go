@@ -1,7 +1,6 @@
 package bubbo
 
 import (
-	"io/ioutil"
 	"net/http"
 	"encoding/json"
 	"fmt"
@@ -10,27 +9,10 @@ import (
 	"time"
 )
 
-var RSA_KEY = func() []byte {
-	key, e := ioutil.ReadFile("bino")
-	if e != nil {
-		panic(e.Error())
-	}
-	return key
-}()
-
-var RSA_PUB = func() []byte {
-	key, e := ioutil.ReadFile("bino.pub")
-	if e != nil {
-		panic(e.Error())
-	}
-	return key
-}()
-
 func keyFunc(token *jwt.Token) (interface{}, error) {
-	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 	}
-	var user *User
 	if _, ok := token.Claims.(jwt.MapClaims); !ok {
 		return nil, fmt.Errorf("Unexpected claim type: %v", token.Claims)
 	} else {
@@ -40,11 +22,11 @@ func keyFunc(token *jwt.Token) (interface{}, error) {
 			Email    :claims["Email"].(string),
 			Password :claims["Password"].(string),
 		}
-		if user, err := authUser(u); user != nil && err != nil {
+		if user, err := authUser(u); user == nil || err != nil {
 			return nil, fmt.Errorf("auth failed: %v", auth)
 		}
 	}
-	return user, nil
+	return key.Public(), nil
 }
 
 func authenticate(w http.ResponseWriter,r *http.Request) (ok bool, token *jwt.Token) {
@@ -54,15 +36,10 @@ func authenticate(w http.ResponseWriter,r *http.Request) (ok bool, token *jwt.To
 		if !ok {
 			return
 		}
-		token, err := jwt.Parse(tokenCookie.Value, keyFunc)
-		ok = err != nil && token.Valid
+		token, err = jwt.Parse(tokenCookie.Value, keyFunc)
+		ok = err == nil && token.Valid
 	}
 	return
-}
-
-func checkToken(tokenstr string) bool {
-	token, err := jwt.Parse(tokenstr, keyFunc)
-	return err != nil && token.Valid
 }
 
 func validUUID(uuid string) bool {
@@ -113,9 +90,9 @@ func auth(w http.ResponseWriter,r *http.Request) {
 			http.StatusInternalServerError)
 		return
 	}
-
-	tokenstr,err:=user.token(uuid).SignedString(RSA_KEY)
+	tokenstr,err:=user.token(uuid).SignedString(key)
 	if err!=nil{
+		log.Println("err when signed token",err)
 		http.Error(w, err.Error(),
 			http.StatusInternalServerError)
 		return
@@ -166,7 +143,7 @@ func register(w http.ResponseWriter,r *http.Request) {
 		return
 	}
 
-	tokenstr,err:=user.token(uuid).SignedString(RSA_KEY)
+	tokenstr,err:=user.token(uuid).SignedString(key)
 	if err!=nil{
 		http.Error(w, err.Error(),
 			http.StatusInternalServerError)
@@ -174,7 +151,6 @@ func register(w http.ResponseWriter,r *http.Request) {
 	}
 	http.SetCookie(w,tokenCookie(tokenstr))
 	w.WriteHeader(http.StatusCreated)
-
 }
 
 var tokenTimeDur=func()time.Duration{

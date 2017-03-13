@@ -17,15 +17,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-image/iron-image.html">
+<link rel="import" href="../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
-<link rel="import" href="my-icons.html">
-<link rel="import" href="my-account.html">
-<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/app-pouchdb/app-pouchdb-document.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
 
-<script src="../bower_components/uuid/uuid.js"></script>
+
+<link rel="import" href="my-icons.html">
+<link rel="import" href="my-server.html">
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="my-app">
   <template>
@@ -36,6 +50,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --paper-icon-button-ink-color: #4285f4;
         --app-background-color: #f5f8fa;*/
         display: block;
+      }
+
+      app-drawer-layout {
+        /*@apply(--layout-horizontal);*/
       }
 
       app-header {
@@ -54,7 +72,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app-drawer {
         --app-drawer-content-container: {
           background-color: var(--app-background-color);
-        }
+        };
       }
 
       .drawer-list {
@@ -79,62 +97,182 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         line-height: 40px;
       }
 
-      .drawer-list li a .iron-selected {
+      .drawer-list li .iron-selected {
         color: black;
         font-weight: bold;
       }
+
+      .header {
+        height: auto;
+        background-color: var(--app-background-color);
+      }
+
+      .a {
+        @apply(--layout-horizontal);
+        height: auto;
+      }
+
+      .a .b {
+        @apply(--layout-flex-9);
+      }
+
+      .right {
+        @apply(--layout-flex-3);
+      }
+
+      .user-box {
+        marrgin-top: 16px;
+        padding: 16px;
+
+        @apply(--layout-horizontal);
+        display: flex;
+        color: #757575;
+      }
+
+      .user-bo my-account {
+        @apply(--layout-flex);
+      }
+
+      .user-box .button-container {
+        @apply(--layout-flex-3);
+      }
+
+      .names {
+        /*@apply(--layout-vertical);*/
+        padding: 8px 16px 0 16px;
+        @apply(--layout-flex);
+        @apply(--layout-center);
+      }
+
+      .settings-box {
+        @apply(--layout-center);
+        @apply(--layout-end);
+      }
+
+      .settings-box paper-icon-button {
+        @apply(--layout-center-center);
+        color: #66757f;
+        margin-right: 8px;
+      }
+
+      .settings-box ul {
+        background-color: var(--app-background-color);
+        -webkit-padding-start: 16px;
+        float: left;
+      }
+
+      .settings-box paper-menu-button {
+        --paper-menu-button-dropdown: {
+          radius: 3px;
+          width: 210px;
+          /*margin-top: 48px;*/
+        }
+      }
+
+      .settings-box a {
+        display: block;
+
+        padding: 0 16px;
+
+        text-decoration: none;
+
+        color: var(--app-secondary-color);
+
+        line-height: 40px;
+      }
+
+      /*#logout paper-button{
+        margin:0 auto;
+        --paper-button:{
+          background: red;
+          color: yellow;
+        }
+      }*/
+
     </style>
-    <app-localstorage-document key="UUID" data="{{UUID}}" zeroValue="_initUUID">
-    </app-localstorage-document>
-    <app-localstorage-document key="{{userProfileKey()}}" data="{{profile}}">
-    </app-localstorage-document>
+
+    <app-localstorage-document key="uuid" data="{{uuid}}" zeroValue="_initUUID"></app-localstorage-document>
+    <app-localstorage-document key="username" data="{{username}}"></app-localstorage-document>
+    <app-localstorage-document key="loggedout" data="{{loggedout}}"></app-localstorage-document>
+    <app-localstorage-document key="following-version" data="{{followingVersion}}"></app-localstorage-document>
+    <app-localstorage-document key="followers-version" data="{{followersVersion}}"></app-localstorage-document>
+    <app-localstorage-document key="following" data="{{following}}"></app-localstorage-document>
+    <app-localstorage-document key="followers" data="{{followers}}"></app-localstorage-document>
+
+    <app-pouchdb-index db-name="profiles" fields='["Username"]'></app-pouchdb-index>
+    <app-pouchdb-document db-name="profiles" doc-id="{{userProfile.Username}}"
+                          data="{{userProfile}}"></app-pouchdb-document>
+    <app-pouchdb-document db-name="profiles" doc-id="{{profile.Username}}" data="{{profile}}"></app-pouchdb-document>
+
+    <app-pouchdb-index db-name="profiles" fields='["Username"]'></app-pouchdb-index>
+
+    <iron-media-query query="(max-width:400px)" query-matches="{{mobile}}"></iron-media-query>
+
+    <my-server id="server" on-server-open="onServerOpen" on-server-close="onServerClose"></my-server>
 
     <app-location route="{{route}}"></app-location>
-    <app-route
-            route="{{route}}"
-            pattern="/:page"
-            data="{{routeData}}"
-            tail="{{subroute}}"></app-route>
-
+    <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
     <app-drawer-layout fullbleed>
       <!-- Drawer content -->
-      <app-drawer>
-        <my-account></my-account>
+
+      <app-drawer align="left" hidden="{{_hideMenu(page)}}">
+        <div class="user-box">
+          <!--<img class="avatar is="lazyload-image" src="../images/ac.JPG" offset="200" width="64" height="64">-->
+          <iron-image class="avatar" sizing="cover" width="64" height="64" src="../images/ow.png"></iron-image>
+          <div class="names">
+            <span class="name">bino</span><br>
+            <span class="desc">[[desc]]</span>
+          </div>
+          <div class="settings-box">
+            <paper-menu-button vertical-offset="48">
+              <paper-icon-button icon="default:settings" class="dropdown-trigger" on-tap="toggleSettingsMenu"></paper-icon-button>
+              <paper-menu class="dropdown-content" selected="[[page]]">
+                <paper-item class="icon" name="profile">
+                  <!--<iron-icon icon="social:person"></iron-icon>-->
+                  <a href="/profile">Profile</a></paper-item>
+                <paper-item class="icon" name="following">
+                  <a name="following" href="/following">Following</a></paper-item>
+                <paper-item class="icon" name="followers">
+                  <a name="followers" href="/followers">Followers</a></paper-item>
+                <paper-item id="logout" class="icon" name="logout">
+                  <a name="login" on-tap="logout">Logout</a></paper-item>
+                </paper-item>
+              </paper-menu>
+            </paper-menu-button>
+          </div>
+        </div>
         <ul role="navigation" class="drawer-list">
           <iron-selector selected="[[page]]" attr-for-selected="name" role="navigation">
             <li class="icon">
-              <iron-icon icon="icons:home"></iron-icon>
-              <a name="home" href="/home">Home</a>
+              <iron-icon icon="default:home"></iron-icon>
+              <a name="xo" href="/home">Home</a>
             </li>
             <li class="icon">
-              <iron-icon icon="icons:search"></iron-icon>
-              <a name="login" href="/login">Explore</a>
+              <iron-icon icon="default:search"></iron-icon>
+              <a name="explore" href="/explore">Explore</a>
             </li>
           </iron-selector>
         </ul>
       </app-drawer>
 
       <!-- Main content -->
-      <app-header-layout has-scrolling-region>
-
-        <!--<app-header condenses reveals effects="waterfall">
-          <app-toolbar>
-            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
-            <div main-title>My App</div>
-          </app-toolbar>
-        </app-header>-->
-
-        <iron-pages
-                selected="[[page]]"
-                attr-for-selected="name"
-                fallback-selection="view404"
-                role="main">
-          <my-profile id="profile" name="profile" profile="{{profile}}"></my-profile>
-          <my-home id="home" name="home" userInfo="{{userInfo}}" users="{{users}}"></my-home>
-          <my-login name="login" UUID="{{UUID}}" on-signed-in="onSignedIn"></my-login>
-          <my-view404 name="view404"></my-view404>
-        </iron-pages>
-      </app-header-layout>
+      <app-toolbar class="header">
+        <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+      </app-toolbar>
+      <div class="a page">
+        <div class="b">
+          <iron-pages selected="[[page]]" attr-for-selected="name" fallback-selection="view404" role="main">
+            <my-profile name="profile" profile="{{profile}}"></my-profile>
+            <my-following name="following"></my-following>
+            <my-following name="followers"></my-following>
+            <my-home id="home" name="home" app="self()"></my-home>
+            <my-explore name="explore" app="self()"></my-explore>
+            <my-login name="login" uuid="{{uuid}}" username="{{username}}" on-signed-in="onSignedIn"></my-login>
+            <my-view404 name="view404"></my-view404>
+          </iron-pages>
+        </div>
+        <div class="right" hidden$="{{_hideMenu(page)}}"></div>
+      </div>
     </app-drawer-layout>
   </template>
 
@@ -148,8 +286,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           reflectToAttribute: true,
           observer: '_pageChanged'
         },
-        UUID: String,
-        profile: Object,
+        uuid: {
+          type: String,
+          value: ""
+        },
+        username: {
+          type: String,
+          value: "",
+          observer: '_usernameChanged'
+        },
+        server: Server,
+        userProfile: {
+          type: Object,
+          value: {
+            Username: "",
+            Avatar: "",
+            Version: 0
+          }
+        },
+        profile: {
+          type: Object,
+          value: {
+            Username: "",
+            Avatar: "",
+            Version: 0
+          }
+        },
+        settingsMenuHide: {
+          type: Boolean,
+          value: true
+        },
+        loggedout: {
+          type: Boolean,
+          value: false,
+          observer: '_loggedoutChanged'
+        },
+        followingVersion: {
+          type: Number,
+          value: 0
+        },
+        followersVersion: {
+          type: Number,
+          value: 0
+        },
         following: {
           type: Array,
           value: []
@@ -161,35 +340,133 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       observers: [
-        '_routePageChanged(routeData.page)',
-        Polymer.AppNetworkStatusBehavior
+        '_routePageChanged(routeData.page)'
+        /*Polymer.AppNetworkStatusBehavior*/
       ],
-
-      _routePageChanged: function (page) {
-        this.page = page || 'view1';
+      ready: function () {
+        this.server = this.$.server;
+        this.server.open();
+        if (this.uuid == '') {
+          var uuid = require('uuid');
+          this.uuid = uuid.v4();
+        }
       },
-
+      self: function () {
+        return this;
+      },
+      _routePageChanged: function (page) {
+        this.page = page || 'home';
+      },
       _pageChanged: function (page) {
-        // Load page import on demand. Show 404 page if fails
         var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
         this.importHref(resolvedPageUrl, null, this._showPage404, true);
+      },
+      _loggedoutChanged: function () {
+        if (this.loggedout) {
+          this.page = 'login';
+        }
       },
 
       _showPage404: function () {
         this.page = 'view404';
       },
       onSignedIn: function () {
-        this.home.connect();
+        this.loggedout = false;
+        if (this.server.status == 'open') {
+          this.server.close();
+        }
+        this.server.open();
       },
       _initUUID: function () {
-        this.UUID = '123456';
+        var uuid = require('uuid');
+        return uuid.v4();
       },
-      _initUserInfoVersion: function () {
-        return {'version': 0};
+      _hideMenu: function (page) {
+        return page == 'login';
       },
-      userProfileKey: function () {
-        return this.profile.username + "-profile";
+      toggleSettingsMenu: function () {
+        this.settingsMenuHide = !this.settingsMenuHide;
+      },
+      logout: function () {
+        this.loggedout = true;
+        this.page = 'login';
+      },
+      onServerOpen: function () {
+        /*this.checkProfile();
+         this.checkFollowing();
+         this.checkFollowers();*/
+      },
+      onServerClose: function () {
+
+      },
+      checkProfile: function () {
+        var self = this;
+        var ret = false;
+        var event = new MyEvent('profile', {
+          'username': self.userProfile.Username,
+          'version': self.userProfile.Version
+        });
+        this.server.send(event).then(function (event) {
+          var userProfile = event.Detail;
+          var version = userProfile.version;
+          if (version && version > self.userProfile.version) {
+            self.userProfile = userProfile;
+            console.log('user profile updated');
+          }
+          ret = true;
+        }).catch(function (event) {
+          console.log(event);
+        });
+        return ret;
+      },
+      checkFollowing: function () {
+        var self = this;
+        var ret = false;
+        var event = new MyEvent('checkFollowing', {
+          'version': self.followingVersion
+        });
+        this.server.send(event)
+        .then(function (event) {
+          self.following = event.Detail.following;
+          ret = true;
+        })
+        .catch(function (event) {
+          console.log(event);
+          if (event && event.Detail.msg == 'not updated') {
+            console.log('check following not updated');
+          } else {
+            console.error(event.path(), event.Detail['msg']);
+          }
+        });
+        return ret;
+      },
+      checkFollowers: function () {
+        var self = this;
+        var ret = false;
+        var event = new MyEvent('checkFollowers', {
+          'version': self.followersVersion
+        });
+        this.server.send(event).then(function (event) {
+          self.followers = event.Detail.followers;
+          ret = true;
+        }).catch(function (event) {
+          if (event.Detail.msg && event.Detail.msg == 'not updated') {
+            console.log('check followers not updated');
+          } else {
+            console.error(event.path(), event.Detail['msg']);
+          }
+        });
+        return ret;
+      },
+      _usernameChanged: function (username) {
+        if (username) {
+          this.userProfile.Username = username;
+        }
+      },
+      _profileSelector: function (username) {
+        return 'username = ' + username;
       }
     });
+
   </script>
 </dom-module>

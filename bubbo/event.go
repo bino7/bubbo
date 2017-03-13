@@ -8,11 +8,11 @@ type Event struct{
 	Detail Detail
 }
 
-func errorEvent(err error)*Event{
+func errorEvent(group,_type string,err error)*Event{
 	return &Event{
-		Group:"*",
-		Type:"err",
-		Detail:Detail{"msg":err.Error()},
+		Group:group,
+		Type:_type,
+		Detail:Detail{"error":true,"msg":err.Error()},
 	}
 }
 

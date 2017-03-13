@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	store_path = "p.db"
+	store_path = "bubbo.db"
 	db *storm.DB
 )
 

@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"github.com/rs/cors"
-
+	"crypto/rsa"
 )
 
 var upgrader = websocket.Upgrader{
@@ -13,17 +13,22 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var frontendServer string
+var frontendServer="http://localhost:8000"
 
-func Run(){
+var key *rsa.PrivateKey
+
+func Run(rsakey *rsa.PrivateKey){
 	initStore()
+
+	key=rsakey
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth",auth)
 	mux.HandleFunc("/register",register)
 	mux.Handle("/peer",newPeer())
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:     []string{"http://localhost:8080"},
+		AllowedOrigins:     []string{frontendServer},
 		AllowedMethods:     []string{"POST", "GET", "PUT", "DELETE"},
 		AllowedHeaders:     []string{"Content-Type","Content-Range","Content-Disposition",
 						"Accept","Authorization","Set-Cookie",},
