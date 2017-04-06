@@ -2,7 +2,6 @@ package bubbo
 
 import (
 	"sync"
-	_ "github.com/bino7/lib"
 )
 
 type peersEntry struct {
