@@ -1,0 +1,90 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+<link rel="import" href="shared-styles.html">
+<dom-module id="my-following">
+
+  <template>
+
+    <style is="custom-style" include="shared-styles">
+      :host {
+        display: block;
+        @apply(--paper-font-common-base);
+        background-color: var(--app-background-color);
+        padding:16px 0;
+      }
+
+      #list {
+        --iron-list-items-container: {
+          /*max-width: 800px;*/
+          /*margin: 16px auto;*/
+          /*border-bottom: 1px solid #ddd;*/
+        };
+      }
+
+      .item {
+        padding: 15px 20px;
+        background-color: white;
+        font-size: 15px;
+      }
+
+      .item {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        cursor: pointer;
+      }
+
+      .avatar {
+        height: 20px;
+        width: 20px;
+        border-radius: 3px;
+        box-sizing: border-box;
+        background-color: #DDD;
+        margin-right: 16px;
+      }
+
+      .pad {
+        line-height: 20px;
+      }
+
+      .secondary {
+        color: gray;
+        margin-left: 10px;
+      }
+
+
+    </style>
+    <iron-list id="list" class="list" items="[[following]]" scroll-target="document">
+      <template>
+          <div class="item">
+            <iron-image class="avatar" sizing="contain" src="[[item.image]]"></iron-image>
+            <div class="pad">
+              <span class="primary">[[item]]</span> <span class="secondary">[[item]]</span>
+            </div>
+            <div class="space"></div>
+            <div><paper-button>Unfollow</paper-button></div>
+          </div>
+      </template>
+    </iron-list>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-following',
+
+      properties: {
+        following: {
+          type: Array,
+          value: ['A', 'Aa', 'aaa', 'dfdfa','asdfasdf','dfdf','cdcdc','ererer','cdcdc','sdsese','mnmnmn','dfdf','asdfsdf','xxce','vdfdf','ppl','bbbc','2wrwer']
+        }
+      },
+
+      observers: []
+
+    });
+
+  </script>
+
+</dom-module>

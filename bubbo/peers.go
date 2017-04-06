@@ -31,7 +31,7 @@ func (ps *peersEntry)add(p *peer) {
 func (ps *peersEntry)remove(peer *peer) {
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
-	delete(ps.userPeerEntry, peer.uuid)
+	delete(ps.peerEntry, peer.uuid)
 	userPeers := ps.userPeerEntry[peer.username]
 	for i, p := range userPeers {
 		if p == peer {

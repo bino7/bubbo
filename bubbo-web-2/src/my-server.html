@@ -1,0 +1,101 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-storage/app-network-status-behavior.html">
+<link rel="import" href="../bower_components/websocket-component/websocket-component.html">
+
+<dom-module id="my-server">
+  <template>
+    <style>
+    </style>
+    <websocket-component id='server'
+                         url='ws://localhost:3000/peer?uuid=[[uuid]]'
+                         on-websocket-open='onOpen'
+                         on-websocket-error='onError'
+                         on-websocket-message='onMessage'
+                         on-websocket-close='onClose'>
+
+    </websocket-component>
+
+  </template>
+  <script>
+    Server = Polymer({
+      is: 'my-server',
+
+      behaviors: [
+        Polymer.AppNetworkStatusBehavior
+      ],
+
+      listeners: {
+        'checkUserInfoFinish': 'onCheckUserInfoFinish'
+      },
+
+      properties: {
+
+        uuid: {
+          type:String,
+          reflectToAttribute: true
+        },
+        timeout: Number,
+        status: {
+          type: String,
+          readonly: true,
+          notify: true
+        }
+      },
+
+      open: function () {
+        this.$.server.open();
+      },
+      close:function(){
+        this.$.server.close();
+      },
+      onOpen: function (event) {
+        this.status = 'open';
+        console.log('onOpen');
+        this.fire('server-open', event);
+      },
+
+      onError: function (event) {
+        this.status = 'error';
+        this.fire('server-error', event);
+      },
+
+      onMessage: function (event) {
+        var eve = EventFromJSON(JSON.parse(event.detail.data));
+        this.fire(eve.Id,eve);
+        this.fire(eve.Type, eve);
+        if (eve.Group && eve.Group!='' && eve.Group!='*'){
+          this.fire(eve.Group,eve);
+        }
+      },
+
+      onClose: function (event) {
+        this.status = 'close';
+        this.fire('server-close', event);
+        console.log('server-close',event);
+      },
+
+      send: function (event) {
+        if (!event) {
+          return
+        }
+        var self = this;
+        var promise = new Promise(function (resolve, reject) {
+          self.addEventListener(event.Id, function (e) {
+            var event=e.detail;
+            if (!event.Detail.error){
+              resolve(event);
+            }else{
+              reject(event);
+            }
+          });
+        });
+
+        var data = JSON.stringify(event);
+        this.$.server.send(data);
+
+        return promise;
+      },
+    });
+  </script>
+
+</dom-module>

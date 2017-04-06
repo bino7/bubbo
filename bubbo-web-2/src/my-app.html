@@ -1,0 +1,456 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-image/iron-image.html">
+<link rel="import" href="../bower_components/iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="../bower_components/app-pouchdb/app-pouchdb-document.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animations.html">
+
+
+<link rel="import" href="my-icons.html">
+<link rel="import" href="my-server.html">
+<link rel="import" href="my-peer.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-app">
+  <template>
+    <style include="shared-styles">
+      :host {
+        /*--app-primary-color: #4285f4;
+        --app-secondary-color: black;
+        --paper-icon-button-ink-color: #4285f4;
+        --app-background-color: #f5f8fa;*/
+        display: block;
+      }
+
+      app-drawer-layout {
+        /*@apply(--layout-horizontal);*/
+      }
+
+      /*app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
+
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      app-toolbar {
+        height: auto;
+      }*/
+
+      app-drawer {
+        --app-drawer-content-container: {
+          background-color: var(--app-background-color);
+        };
+      }
+
+      .drawer-list {
+        background-color: var(--app-background-color);
+        -webkit-padding-start: 0px;
+      }
+
+      .drawer-list li {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+
+      .drawer-list li a {
+        display: block;
+
+        padding: 0 16px;
+
+        text-decoration: none;
+
+        color: var(--app-secondary-color);
+
+        line-height: 40px;
+      }
+
+      .drawer-list li .iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+
+      .header {
+        height: auto;
+        background-color: var(--app-background-color);
+      }
+
+      .a {
+        @apply(--layout-horizontal);
+        height: auto;
+      }
+
+      .a .b {
+        @apply(--layout-flex-9);
+      }
+
+      .right {
+        @apply(--layout-flex-3);
+      }
+
+      .user-box {
+        marrgin-top: 16px;
+        padding: 16px;
+
+        @apply(--layout-horizontal);
+        display: flex;
+        color: #757575;
+      }
+
+      .user-bo my-account {
+        @apply(--layout-flex);
+      }
+
+      .user-box .button-container {
+        @apply(--layout-flex-3);
+      }
+
+      .names {
+        /*@apply(--layout-vertical);*/
+        padding: 8px 16px 0 16px;
+        @apply(--layout-flex);
+        @apply(--layout-center);
+      }
+
+      .settings-box {
+        @apply(--layout-center);
+        @apply(--layout-end);
+      }
+
+      .settings-box paper-icon-button {
+        @apply(--layout-center-center);
+        color: #66757f;
+        margin-right: 8px;
+      }
+
+      .settings-box ul {
+        background-color: var(--app-background-color);
+        -webkit-padding-start: 16px;
+        float: left;
+      }
+
+      .settings-box paper-menu-button {
+        --paper-menu-button-dropdown: {
+          radius: 3px;
+          width: 210px;
+          /*margin-top: 48px;*/
+        }
+      }
+
+      .settings-box a {
+        display: block;
+
+        padding: 0 16px;
+
+        text-decoration: none;
+
+        color: var(--app-secondary-color);
+
+        line-height: 40px;
+      }
+
+      .explore {
+        margin: 0 16px;
+        padding: 0 8px;
+        @apply(--layout-horizontal);
+      }
+
+      .remote {
+        cursor: hand;
+        padding: 8px 16px 8px 16px;
+      }
+
+      .remote:hover {
+        background-color: #e1e8ed;
+      }
+
+      .remote .names .uuid {
+        cursor: pointer;
+      }
+
+      paper-button {
+        @apply(--layout-center-center);
+        --paper-button:{
+          height:24px;
+        }
+      }
+
+      .content{
+        @apply(--layout-horizontal);
+      }
+
+      .main{
+        @apply(--layout-flex-8);
+      }
+      .left-side{
+        @apply(--layout-flex-2);
+      }
+      .right-side{
+        @apply(--layout-flex-2);
+      }
+
+
+
+
+
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+
+    <iron-localstorage name="uuid" value="{{uuid}}" on-iron-localstorage-load-empty="_initUUID"></iron-localstorage>
+
+    <app-pouchdb-index db-name="profiles" fields='["Username"]'></app-pouchdb-index>
+    <app-pouchdb-document db-name="profiles" doc-id="{{profile.Username}}"
+                          data="{{profile}}"></app-pouchdb-document>
+
+    <iron-media-query query="(max-width:400px)" query-matches="{{mobile}}"></iron-media-query>
+
+    <my-server id="server" uuid="[[uuid]]" on-server-open="onServerOpen" on-server-close="onServerClose"></my-server>
+
+    <paper-dialog id="invitation" entry-animation="scale-up-animation" exit-animation="fade-out-animation" closingReason="{{invitationClosingReason}}">
+      <h3 class="msg">[[invitation.Detail.from]] invite you for video chat</h3>
+      <div class="buttons">
+        <paper-button dialog-dismiss on-tap="refuse">Cancel</paper-button>
+        <paper-button dialog-confirm autofocus on-tap="accept">Accept</paper-button>
+      </div>
+    </paper-dialog>
+
+    <div class="content page">
+      <div class="left-side">
+        <div class="user-box">
+          <!--<img class="avatar is="lazyload-image" src="../images/ac.JPG" offset="200" width="64" height="64">-->
+          <iron-image class="avatar" sizing="cover" width="64" height="64" src="../images/avatar.svg"></iron-image>
+          <div class="names">
+            <span class="name">[[username]]</span><br>
+            <span class="uuid">[[uuid]]</span>
+          </div>
+        </div>
+        <div class="explore">
+          <paper-input label="输入对方的ID" value="{{lookup}}">
+            <paper-icon-button  class="icon" suffix on-tap="lookupuuid" icon="default:add" alt="lookup" title="lookup">add</paper-icon-button>
+          </paper-input>
+        </div>
+        <ul role="navigation" class="drawer-list">
+          <iron-list as="peer" items="[[peers]]" selected-item="{{selectedPeer}}" selection-enabled selected-as="name">
+            <template>
+              <li name="{{peer}}" class="remote icon">
+                <iron-image class="avatar" sizing="cover" width="32" height="32" src="../images/avatar.svg"></iron-image>
+                <div class="names">
+                  <span class="uuid">[[peer]]</span>
+                </div>
+              </li>
+            </template>
+          </iron-list>
+        </ul>
+      </div>
+      <div class="main">
+        <iron-pages id="pages" selected="[[page]]" attr-for-selected="id" fallback-selection="view404" role="main">
+          <template is="dom-repeat" items="{{peers}}">
+            <my-peer id="peer-{{item}}" uuid="{{uuid}}" remote="{{item}}" server="{{server}}"></my-peer>
+          </template>
+          <my-view404 id="view404"></my-view404>
+        </iron-pages>
+      </div>
+      <div class="right-side"></div>
+    </div>
+    <!--</app-drawer-layout>-->
+  </template>
+
+  <script>
+    Polymer({
+      is: 'my-app',
+
+      properties: {
+        page: {
+          type: String,
+          reflectToAttribute: true,
+          observer: '_pageChanged'
+        },
+        uuid: {
+          type: String,
+          value: ''
+        },
+        username: {
+          type: String,
+          value: '',
+          observer: '_usernameChanged'
+        },
+        server: Server,
+        profile: {
+          type: Object,
+          value: {
+            Username: "",
+            Avatar: "",
+            Version: 0
+          }
+        },
+        peers: {
+          type: Array,
+          value: []
+        },
+        lookup: {
+          type: String
+        },
+        selectedPeer:{
+          type:String,
+          observer: '_selectedPeerChanged'
+        },
+        invitation:{
+          type:Object,
+          value:{}
+        },
+        invitationClosingReason:{
+          type:Object,
+          value:{}
+        }
+      },
+
+      observers: [
+        '_routePageChanged(routeData.page)'
+        /*Polymer.AppNetworkStatusBehavior*/
+      ],
+      attached: function () {
+        var self = this;
+        this.server = this.$.server;
+        this.server.open();
+
+        this.server.addEventListener('invitation', function(e){
+          var event=e.detail;
+          if (event.Detail.to==self.uuid){
+            self.invitation=event;
+            self.$.invitation.open();
+          }
+        });
+      },
+
+      _routePageChanged: function (page) {
+        this.page = page || 'home';
+      },
+      _pageChanged: function (page) {
+        if (page.startsWith('peer-')){
+          return
+        }
+        var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+        this.importHref(resolvedPageUrl, null, this._showPage404, true);
+      },
+
+      _showPage404: function () {
+        this.page = 'view404';
+      },
+      _initUUID: function () {
+        var uuid = require('uuid');
+        this.uuid = this.shorterUUID(uuid.v4());
+      },
+      onServerOpen: function () {
+
+      },
+      onServerClose: function () {
+        this.server.open();
+      },
+      _usernameChanged: function (username) {
+        /*if (username) {
+         this.userProfile.Username = username;
+         }*/
+      },
+
+      shorterUUID: function (uuid) {
+        if (uuid) {
+          var pics = uuid.split('-');
+          return pics[pics.length - 1];
+        }
+        return '';
+      },
+
+      lookupuuid: function () {
+        var self=this;
+        console.log(this.lookup,!this.lookup,this.lookup == this.uuid);
+        if (!this.lookup || this.lookup == this.uuid) return;
+        var uuid=this.lookup;
+        var event = new MyEvent('lookup', {
+          'uuid': this.lookup
+        });
+        this.server.send(event).then(function (event) {
+          self.push('peers', uuid);
+          self.lookup=null;
+        }).catch(function (event) {
+          self.lookup=null;
+        });
+      },
+
+      _selectedPeerChanged: function (peer) {
+        if (peer){
+          this.page='peer-'+peer;
+        }
+      },
+
+      refuse:function(){
+        this.invitation.Detail.reply='refuse';
+        this.server.send(this.invitation);
+        this.invitation=null;
+      },
+
+      accept:function(){
+        this.invitation.Detail.reply='accept';
+        var from=this.invitation.Detail.from;
+        if (this.peers.indexOf(from)==-1){
+          this.push('peers',from);
+        }
+
+        var newPage='peer-'+from;
+        if (this.page!=newPage){
+          console.log('new function');
+          var self=this;
+          this.async(function(){
+            self.$.pages.select(newPage);
+            self.server.send(this.invitation);
+            self.invitation=null;
+          },1);
+        }else{
+          this.server.send(this.invitation);
+          this.invitation=null;
+        }
+      },
+
+      _peersChanged:function(){
+        this.$.pages.select('peer-'+from);
+      }
+    });
+
+  </script>
+</dom-module>

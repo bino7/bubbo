@@ -1,0 +1,80 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+<link rel="import" href="shared-styles.html">
+<dom-module id="my-account">
+
+  <template>
+
+    <style is="custom-style" include="shared-styles">
+
+      :host {
+        display: block;
+        marrgin-top:16px;
+        padding:16px;
+        display: flex;
+
+        @apply(--layout-horizontal);
+        /*padding: 16px;*/
+        display: flex;
+        color: #757575;
+        /*background-color: var(--app-background-color);*/
+      }
+
+      .names{
+        /*@apply(--layout-vertical);*/
+        padding:8px 16px 0 16px;
+        @apply(--layout-flex);
+        @apply(--layout-center);
+      }
+
+      .name{
+
+      }
+
+      .button-container {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        @apply(--layout-end);
+      }
+
+      .button-container paper-icon-button {
+        @apply(--layout-center-center);
+        color: #66757f;
+        margin-right: 8px;
+      }
+    </style>
+      <iron-image class="avatar" sizing="cover" width="64" height="64" src="../images/ac.JPG"></iron-image>
+      <div class="names">
+        <span class="name">bino</span><br>
+        <span class="desc">[[desc]]</span>
+      </div>
+
+      <div class="button-container">
+        <paper-icon-button icon="settings" on-tap="settings"></paper-icon-button>
+      </div>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-account',
+
+      properties: {
+        desc:{
+          type:String,
+          value:"what's up"
+        }
+      },
+
+      observers: []
+    });
+
+  </script>
+
+</dom-module>
