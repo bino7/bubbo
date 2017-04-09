@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"github.com/rs/cors"
 	"crypto/rsa"
+	"io"
+	"os"
+	"log"
 )
 
 var upgrader = websocket.Upgrader{
@@ -17,10 +20,11 @@ var frontendServer="http://localhost:8000"
 
 var key *rsa.PrivateKey
 
-func Run(rsakey *rsa.PrivateKey){
+func Run(rsakey *rsa.PrivateKey,logFile *os.File){
 	initStore()
 
 	key=rsakey
+	log.SetOutput(logFile)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth",auth)
@@ -39,3 +43,4 @@ func Run(rsakey *rsa.PrivateKey){
 
 	http.ListenAndServe(":3000", c.Handler(mux))
 }
+

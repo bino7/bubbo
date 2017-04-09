@@ -8,12 +8,17 @@ import (
 	"log"
 	"crypto/x509"
 	"fmt"
+	"os"
 )
 
 var key *rsa.PrivateKey
 
 func main() {
-	bubbo.Run(key)
+	log,err:= os.OpenFile("testlogfile", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err!=nil {
+		panic(err)
+	}
+	bubbo.Run(key,log)
 }
 
 func init(){
