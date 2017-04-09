@@ -78,7 +78,6 @@ func peerConnect(w http.ResponseWriter, r *http.Request) {
 	claims := token.Claims.(jwt.MapClaims)
 	p.uuid = claims["UUID"].(string)
 	p.username = claims["Username"].(string)*/
-	log.SetOutput(logFile)
 	log.Println("peerConnect()")
 	r.ParseForm()
 	uuid := r.Form.Get("uuid")
