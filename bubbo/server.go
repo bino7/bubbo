@@ -16,14 +16,15 @@ var upgrader = websocket.Upgrader{
 }
 
 var frontendServer="https://bubbo.cn"
+var logFile *os.File
 
 var key *rsa.PrivateKey
 
-func Run(rsakey *rsa.PrivateKey,logFile *os.File){
+func Run(rsakey *rsa.PrivateKey,log *os.File){
 	initStore()
 
 	key=rsakey
-	log.SetOutput(logFile)
+	logFile=log
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth",auth)
