@@ -28,7 +28,7 @@ func Run(rsakey *rsa.PrivateKey,log *os.File){
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth",auth)
 	mux.HandleFunc("/register",register)
-	mux.HandleFunc("peer",peerConnect)
+	mux.HandleFunc("/peer",peerConnect)
 
 	/*c := cors.New(cors.Options{
 		AllowedOrigins:     []string{frontendServer},
