@@ -3,7 +3,7 @@ package bubbo
 import (
 	"github.com/gorilla/websocket"
 	"net/http"
-	"github.com/rs/cors"
+	/*"github.com/rs/cors"*/
 	"crypto/rsa"
 	"os"
 )
@@ -30,7 +30,7 @@ func Run(rsakey *rsa.PrivateKey,log *os.File){
 	mux.HandleFunc("/register",register)
 	mux.HandleFunc("/peer",peerConnect)
 
-	c := cors.New(cors.Options{
+	/*c := cors.New(cors.Options{
 		AllowedOrigins:     []string{frontendServer},
 		AllowedMethods:     []string{"POST", "GET", "PUT", "DELETE"},
 		AllowedHeaders:     []string{"Content-Type","Content-Range","Content-Disposition",
@@ -40,6 +40,7 @@ func Run(rsakey *rsa.PrivateKey,log *os.File){
 		AllowCredentials:   true,
 	})
 
-	http.ListenAndServe(":3000", c.Handler(mux))
+	http.ListenAndServe(":3000", c.Handler(mux))*/
+	http.ListenAndServe(":3000", mux)
 }
 
