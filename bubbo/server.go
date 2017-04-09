@@ -6,7 +6,6 @@ import (
 	"github.com/rs/cors"
 	"crypto/rsa"
 	"os"
-	"log"
 )
 
 var upgrader = websocket.Upgrader{
