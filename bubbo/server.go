@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"github.com/rs/cors"
 	"crypto/rsa"
-	"io"
 	"os"
 	"log"
 )
@@ -16,7 +15,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var frontendServer="http://localhost:8000"
+var frontendServer="https://bubbo.cn"
 
 var key *rsa.PrivateKey
 
