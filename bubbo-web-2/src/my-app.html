@@ -408,6 +408,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.server.send(event).then(function (event) {
           if (self.peers.indexOf(uuid)==-1){
             self.push('peers', uuid);
+
           }
           self.lookup=null;
         }).catch(function (event) {
