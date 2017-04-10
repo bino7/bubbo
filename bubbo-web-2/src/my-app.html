@@ -406,7 +406,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           'uuid': this.lookup
         });
         this.server.send(event).then(function (event) {
-          if (self.peers.indexOf(from)==-1){
+          if (self.peers.indexOf(uuid)==-1){
             self.push('peers', uuid);
           }
           self.lookup=null;
